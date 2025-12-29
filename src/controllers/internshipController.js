@@ -19,9 +19,20 @@ exports.applyInternship = async (req, res) => {
       message,
     } = req.body;
 
-    const mailOptions = {
+    // ==============================
+    // 1️⃣ CLIENT KO TURANT RESPONSE
+    // ==============================
+    res.status(200).json({
+      success: true,
+      message: "Application submitted successfully",
+    });
+
+    // ==============================
+    // 2️⃣ HR MAIL (BACKGROUND)
+    // ==============================
+    const hrMailOptions = {
       from: `"Internship Application" <${process.env.EMAIL_USER}>`,
-      to: process.env.EMAIL_USER, // hr@witxtechnologies.com
+      to: process.env.EMAIL_USER,
       subject: `New Internship Application - ${full_name}`,
       html: `
         <h2>New Internship Application</h2>
@@ -50,51 +61,38 @@ exports.applyInternship = async (req, res) => {
       `,
     };
 
-    await transporter.sendMail(mailOptions);
+    transporter.sendMail(hrMailOptions)
+      .then(() => console.log("✅ HR mail sent"))
+      .catch(err => console.error("❌ HR mail error:", err));
 
-    // Confirmation mail to user
-const userMailOptions = {
-  from: `"Witx Technologies HR" <${process.env.EMAIL_USER}>`,
-  to: email, // USER ka email
-  subject: "Thank You for Applying – Internship Application Received",
-  html: `
-    <p>Dear <b>${full_name}</b>,</p>
+    // ==============================
+    // 3️⃣ USER CONFIRMATION MAIL (BACKGROUND)
+    // ==============================
+    const userMailOptions = {
+      from: `"Witx Technologies HR" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: "Thank You for Applying – Internship Application Received",
+      html: `
+        <p>Dear <b>${full_name}</b>,</p>
 
-    <p>Thank you for applying for the internship at <b>Witx Technologies</b>.</p>
+        <p>Thank you for applying for the internship at <b>Witx Technologies</b>.</p>
 
-    <p>We have successfully received your application with the following details:</p>
+        <p>We have successfully received your application.</p>
 
-    <ul>
-      <li><b>College:</b> ${college_name}</li>
-      <li><b>Course:</b> ${course_year}</li>
-      <li><b>Branch:</b> ${branch}</li>
-      <li><b>Project Title:</b> ${project_title}</li>
-      <li><b>Role:</b> ${role}</li>
-    </ul>
+        <p>Our team will review your profile and contact you if shortlisted.</p>
 
-    <p>Our team will review your application and contact you if you are shortlisted.</p>
+        <br/>
+        <p>Best regards,<br/>
+        <b>HR Team</b><br/>
+        Witx Technologies</p>
+      `,
+    };
 
-    <br/>
-    <p>Best regards,<br/>
-    <b>HR Team</b><br/>
-    Witx Technologies</p>
-  `,
-};
-
-await transporter.sendMail(userMailOptions);
-
-
-    res.status(200).json({
-      success: true,
-      message: "Application submitted successfully",
-    });
+    transporter.sendMail(userMailOptions)
+      .then(() => console.log("✅ User mail sent"))
+      .catch(err => console.error("❌ User mail error:", err));
 
   } catch (error) {
-    console.error("Email send error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to submit application",
-    });
+    console.error("Controller error:", error);
   }
 };

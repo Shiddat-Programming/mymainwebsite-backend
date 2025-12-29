@@ -10,5 +10,9 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api/internship", internshipRoutes);
+app.get("/health", (req, res) => {
+  res.status(200).send("Backend is awake 🚀");
+});
+
 
 module.exports = app;
